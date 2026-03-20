@@ -30,6 +30,11 @@ from decision_engine.sla_aware_engine import make_sla_aware_decision, SLAAwareDe
 from scheduler.task_scheduler import TaskScheduler, TaskPriority, sample_compute_task, sample_sla_critical_task
 from resource_allocation.advanced_allocator import AdvancedResourceAllocator, initialize_default_servers
 from utils.ai_scaler import predict_servers
+# Import advanced layers
+from advanced_layers.sla_risk_score import calculate_sla_risk
+from advanced_layers.resource_optimization import select_best_vm
+from advanced_layers.sla_compliance_tracking import calculate_sla_compliance
+from advanced_layers.integrated_scheduler import schedule_task_with_advanced_layers, get_advanced_scheduler_status
 # simulation imported only when needed
 
 # Optional dashboard import
@@ -234,7 +239,9 @@ class AICloudResourceManager:
                     name="SLA Critical Task",
                     callback=sample_sla_critical_task,
                     priority=TaskPriority.CRITICAL,
-                    estimated_duration=0.5
+                    estimated_duration=0.5,
+                    cpu_required=2.0,
+                    memory_required=1024
                 )
             elif load_level > 1.0:
                 # Medium load - submit high priority tasks
@@ -243,6 +250,8 @@ class AICloudResourceManager:
                     callback=sample_compute_task,
                     priority=TaskPriority.HIGH,
                     estimated_duration=1.0,
+                    cpu_required=1.5,
+                    memory_required=768,
                     args=(load_level, 2)
                 )
             else:
@@ -252,6 +261,8 @@ class AICloudResourceManager:
                     callback=sample_compute_task,
                     priority=TaskPriority.NORMAL,
                     estimated_duration=2.0,
+                    cpu_required=1.0,
+                    memory_required=512,
                     args=(load_level, 1)
                 )
         except Exception as e:
@@ -316,6 +327,103 @@ class AICloudResourceManager:
             'resource_utilization': self.resource_allocator.get_resource_utilization()
         }
     
+    def demonstrate_advanced_layers(self):
+        """Demonstrate the three advanced layers in action"""
+        print("\n🎯 === Advanced Layers Demonstration ===")
+        
+        # Sample VM pool
+        vm_pool = [
+            {'id': 'vm-1', 'cpu_capacity': 100, 'memory_capacity': 100, 'cpu_usage': 60, 'memory_usage': 70, 'latency': 50},
+            {'id': 'vm-2', 'cpu_capacity': 100, 'memory_capacity': 100, 'cpu_usage': 30, 'memory_usage': 40, 'latency': 80},
+            {'id': 'vm-3', 'cpu_capacity': 100, 'memory_capacity': 100, 'cpu_usage': 80, 'memory_usage': 85, 'latency': 30},
+            {'id': 'vm-4', 'cpu_capacity': 100, 'memory_capacity': 100, 'cpu_usage': 20, 'memory_usage': 25, 'latency': 20}
+        ]
+        
+        print("\n📊 Layer 1: SLA Risk Score Assessment")
+        print("=" * 50)
+        
+        # Demonstrate SLA risk calculation
+        current_metrics = self._generate_current_metrics()
+        sla_risk = calculate_sla_risk(
+            current_metrics['cpu_usage'],
+            current_metrics['memory_usage'],
+            current_metrics['response_time'],
+            current_metrics['cpu_usage']  # Using CPU as VM load proxy
+        )
+        
+        print(f"🎯 SLA Risk Score: {sla_risk['risk_score']:.3f}")
+        print(f"   Risk Level: {sla_risk['risk_level']}")
+        print(f"   Component Risks:")
+        for component, risk in sla_risk['component_risks'].items():
+            print(f"     {component}: {risk:.3f}")
+        print("   Recommendations:")
+        for rec in sla_risk['recommendations']:
+            print(f"     {rec}")
+        
+        print("\n🧠 Layer 2: Resource Optimization Score")
+        print("=" * 50)
+        
+        # Demonstrate VM selection optimization
+        best_vm = select_best_vm(vm_pool)
+        if best_vm:
+            print(f"🎯 Best VM Selection: {best_vm['id']}")
+            print(f"   Optimization Score: {best_vm['optimization_score']:.3f}")
+            print(f"   Selection Reason: {best_vm['selection_reason']}")
+            print(f"   Score Components:")
+            components = best_vm.get('components', {})
+            for comp, value in components.items():
+                print(f"     {comp}: {value}")
+        
+        print("\n📈 Layer 3: SLA Compliance Tracking")
+        print("=" * 50)
+        
+        # Demonstrate SLA compliance tracking
+        compliance = calculate_sla_compliance()
+        print(f"🎯 Overall Compliance: {compliance.get('overall_compliance', 0):.1f}%")
+        print(f"   Weighted Compliance: {compliance.get('weighted_compliance', 0):.1f}%")
+        print(f"   Compliance Grade: {compliance.get('compliance_grade', 'N/A')}")
+        print(f"   Total Tasks: {compliance.get('total_tasks', 0)}")
+        print(f"   SLA Violations: {compliance.get('sla_violations', 0)}")
+        
+        if 'metric_compliance' in compliance:
+            print(f"   Metric Breakdown:")
+            for metric, data in compliance['metric_compliance'].items():
+                print(f"     {metric}: {data['compliance_percentage']:.1f}% (Grade: {self._get_compliance_grade_symbol(data['compliance_percentage'])})")
+        
+        print("\n🔗 Integration: All Three Layers Working Together")
+        print("=" * 50)
+        
+        # Show integrated decision
+        sample_task = {
+            'id': 'demo-task',
+            'type': 'compute',
+            'requirements': {'cpu': 20, 'memory': 30},
+            'expected_response_time': 100,
+            'expected_availability': 99.9,
+            'expected_throughput': 1000,
+            'expected_error_rate': 0.01
+        }
+        
+        task_id = schedule_task_with_advanced_layers(sample_task)
+        if task_id:
+            print(f"✅ Task scheduled with ID: {task_id}")
+            print("   Used all three advanced layers for decision making")
+        else:
+            print("❌ Task scheduling failed")
+        
+        print("\n🎯 === Advanced Layers Demo Complete ===")
+    
+    def _get_compliance_grade_symbol(self, compliance_percentage: float) -> str:
+        """Get symbol for compliance grade"""
+        if compliance_percentage >= 95:
+            return "🟢"
+        elif compliance_percentage >= 85:
+            return "🟡"
+        elif compliance_percentage >= 75:
+            return "🟠"
+        else:
+            return "🔴"
+    
     def run_simulation(self, duration_minutes: int = 5):
         """Run a simulation for specified duration"""
         print(f"🎬 Running simulation for {duration_minutes} minutes...")
@@ -341,7 +449,7 @@ class AICloudResourceManager:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="AI Cloud Resource Management System")
-    parser.add_argument("--mode", choices=["monitor", "simulation", "train"], 
+    parser.add_argument("--mode", choices=["monitor", "simulation", "train", "demo"], 
                        default="monitor", help="System operation mode")
     parser.add_argument("--duration", type=int, default=5, 
                        help="Simulation duration in minutes")
@@ -362,6 +470,10 @@ def main():
         elif args.mode == "simulation":
             print(f"🎬 Simulation mode: Running {args.duration} minute simulation...")
             system.run_simulation(duration_minutes=args.duration)
+            
+        elif args.mode == "demo":
+            print("🎯 Demo mode: Demonstrating advanced layers...")
+            system.demonstrate_advanced_layers()
             
         else:  # monitor mode
             print("🔍 Monitor mode: Starting continuous monitoring...")

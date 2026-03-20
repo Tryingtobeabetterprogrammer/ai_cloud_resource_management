@@ -18,14 +18,15 @@ class SLAAwareDecisionEngine:
             self.sla_predictor = predictor
             print(f"✅ SLA model trained with accuracy: {accuracy:.4f}")
         
-        # SLA thresholds and constraints
+        # Enhanced SLA thresholds for 90-99% compliance
         self.sla_thresholds = {
-            'max_response_time': 100,  # ms
-            'max_cpu_usage': 80,       # percentage
-            'max_memory_usage': 85,    # percentage
-            'min_uptime': 99.0,        # percentage
-            'max_cost_per_hour': 10.0, # dollars
-            'safety_margin': 20         # extra capacity percentage
+            'response_time_target': 80,      # Stricter: was 100ms
+            'cpu_usage_threshold': 0.65,     # Stricter: was 0.8
+            'memory_usage_threshold': 0.75,  # Stricter: was 0.85
+            'request_capacity_ratio': 0.8,   # Stricter: was 0.9
+            'error_rate_threshold': 0.005,   # Stricter: was 0.01
+            'sla_violation_risk_threshold': 0.3,  # More conservative
+            'safety_margin': 20  # extra capacity percentage
         }
         
         # Decision weights
