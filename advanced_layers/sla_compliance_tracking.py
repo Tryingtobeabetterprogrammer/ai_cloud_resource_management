@@ -13,12 +13,12 @@ class SLAComplianceTracker:
     """Advanced SLA compliance tracking with multiple metrics"""
     
     def __init__(self):
-        # SLA definitions for 90-99% compliance targets
+        # SLA definitions for realistic compliance tracking
         self.sla_definitions = {
             'response_time': {
-                'target': 80,           # Stricter: was 100ms
-                'warning_threshold': 60,    # Stricter: was 80ms
-                'critical_threshold': 120,   # Stricter: was 150ms
+                'target': 120,           # More realistic: was 80ms
+                'warning_threshold': 100,    # More realistic: was 60ms
+                'critical_threshold': 150,   # More realistic: was 120ms
                 'weight': 0.4              # 40% weight in overall compliance
             },
             'availability': {
